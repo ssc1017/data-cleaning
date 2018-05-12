@@ -30,7 +30,7 @@ def getKthNeighborDist(data, size, p, k, minDkDist):
             continue
 
         if d < p.DkDist:
-            heapq.heappush(heap, (-d, i, data[i]))
+            heapq.heappush(heap, (-d, i, data[i])) #set i to avoid same (d, data[i])
             if len(heap) > k:
                 top = heapq.heappop(heap)
             if len(heap) == k:
@@ -40,7 +40,7 @@ def getKthNeighborDist(data, size, p, k, minDkDist):
 
 
 def computeOutliersIndex(N, k):
-    data = dataset.dropna(axis=0, how='any')[['peer_index_']].values
+    data = dataset.dropna(axis=0, how='any')[['peer_index_', 'overall_score']].values
     data = scalar.fit_transform(data)
     size = data.shape[0]
     minDkDist = 0
@@ -60,8 +60,8 @@ def computeOutliersIndex(N, k):
 
 
 if __name__ == '__main__':
-    N = 20
-    k = 50
+    N = 10
+    k = 10
     heap = computeOutliersIndex(N, k)
     for i in range(len(heap)):
         print scalar.inverse_transform(heap[i][2].data)
