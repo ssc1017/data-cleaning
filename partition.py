@@ -3,14 +3,11 @@ import numpy as np
 import heapq
 import sys
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-#from birch import Birch
 from sklearn.cluster import Birch
-
 
 cluster_num = 100
 dataset = pd.read_csv("dj4e-3xrn.tsv", sep='\t')
-scalar = StandardScaler()
+
 
 class MBR:
     def __init__(self, points):
@@ -22,6 +19,7 @@ class MBR:
         self.is_candidate = 0
         self.endpoint_max = np.max(points,axis=0)
         self.endpoint_min = np.min(points,axis=0)
+
 
 class dataPoint:
     def __init__(self, data):
@@ -113,8 +111,6 @@ def computeCandidatePartitions(pset, k, n):
     minDkDist = 0
     partHeap = [] #minheap
     for i in range(len(pset)):
-        #print (i)
-        #print (minDkDist)
         computeLowerUpper(pset, pset[i], k, minDkDist, i)
         if pset[i].lower > minDkDist:
             heapq.heappush(partHeap, (pset[i].lower, i, pset[i]))
@@ -126,39 +122,35 @@ def computeCandidatePartitions(pset, k, n):
                 sum = sum-topNum
                 topNum = partHeap[0][2].num
 
-            #print (heapNumPoints(partHeap))
-            #print (partHeap[0][2].lower)
             if heapNumPoints(partHeap) >= n:
                 minDkDist = partHeap[0][2].lower
 
     candSet = []
     for i in range(len(pset)):
-        #print (pset[i].upper)
         if pset[i].upper >= minDkDist:
-            candSet.append(pset[i])
-            pset[i].is_candidate=1
-        #print (pset[i].is_candidate)
+            candSet.append(pset[i].points)  # only keep the points of MBR
+            pset[i].is_candidate = 1
 
-    cnt=0
-    for i in range(len(pset)):
-        if pset[i].is_candidate==1:
-            cnt +=1
-    print cnt
-    return candSet
+    print 'the number of candidates: ' + str(len(candSet))
 
-def getPartitionsBirch():
-    data = dataset.dropna(axis=0, how='any')[['peer_index_', 'overall_score', 'progress_category_score']].values
+    combined_candSet = reduce(lambda x, y: np.concatenate((x, y), axis=0), candSet)
 
+    print 'the number of the rest tuples: ' + str(combined_candSet.shape[0])
+    print('finished')
+
+    return combined_candSet
+
+
+def getPartitionsBirch(data):
+    print('doing partition-based algorithm ...')
     num_samples = data.shape[0]
-    indices = np.arange(num_samples)
 
     num_clusters = int(float(num_samples) / 5)
-    print (num_clusters)
     birch_model = Birch(threshold=0.1, n_clusters=num_clusters)
     birch_model.fit(data)
     labels = birch_model.labels_
     n_clusters = np.unique(labels).size
-    print (labels)
+    print 'the number of partitions: ' + str(n_clusters)
 
     ls = [[] for i in range(num_clusters)]
     for i, l in enumerate(labels):
@@ -168,34 +160,17 @@ def getPartitionsBirch():
     for i in range(num_clusters):
         all_MBR.append(MBR(np.array(ls[i])))
 
-    a = all_MBR[3]
-    # print a.points
-    # print a.endpoint_min
-    # print a.endpoint_max
-    # print a.num
-
     return all_MBR
 
-def getPartitionsKmenas():
-    data = dataset.dropna(axis=0, how='any')[['peer_index_', 'overall_score', 'progress_category_score']].values
-    #data = dataset.dropna(axis=0, how='any')[['peer_index_', 'overall_score']].values
-    #data = scalar.fit_transform(data)
+
+def getPartitionsKmenas(data):
     kmeans_model = KMeans(n_clusters=cluster_num).fit(data)
     ls = [[] for i in range(cluster_num)]
     for i, l in enumerate(kmeans_model.labels_):
         ls[l].append(data[i])
-    #print(np.array(ls[10]))
+
     all_MBR=[]
     for i in range(cluster_num):
         all_MBR.append(MBR(np.array(ls[i])))
 
     return all_MBR
-
-if __name__ == '__main__':
-    N = 20
-    k = 100
-    #birch()
-    computeCandidatePartitions(getPartitionsBirch(), k, N)
-    # heap = computeOutliersIndex(N, k)
-    # for i in range(len(heap)):
-    #     print scalar.inverse_transform(heap[i][2].data)
