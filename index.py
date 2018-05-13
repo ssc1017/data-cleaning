@@ -31,7 +31,6 @@ def getKthNeighborDist(data, size, p, k, minDkDist):
 
 
 def computeOutliersIndex(data, N, k):
-    print('doing index-based algorithm ...')
     size = data.shape[0]
     minDkDist = 0
     heap = []
@@ -46,5 +45,5 @@ def computeOutliersIndex(data, N, k):
                 top = heapq.heappop(heap)
             if len(heap) == N:
                 minDkDist = heap[0][0]
-    print('finished')
+
     return heap

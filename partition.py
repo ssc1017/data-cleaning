@@ -1,30 +1,19 @@
-import pandas as pd
 import numpy as np
 import heapq
 import sys
 from sklearn.cluster import KMeans
 from sklearn.cluster import Birch
 
-cluster_num = 100
-dataset = pd.read_csv("dj4e-3xrn.tsv", sep='\t')
-
 
 class MBR:
     def __init__(self, points):
-        #(rot_angle, area, width, height, center_point, corner_points) = minBoundingRect(points)
         self.points = points
         self.num = points.shape[0]
         self.lower = sys.maxint
         self.upper = sys.maxint
         self.is_candidate = 0
-        self.endpoint_max = np.max(points,axis=0)
-        self.endpoint_min = np.min(points,axis=0)
-
-
-class dataPoint:
-    def __init__(self, data):
-        self.DkDist = sys.maxint
-        self.data = data
+        self.endpoint_max = np.max(points, axis=0)
+        self.endpoint_min = np.min(points, axis=0)
 
 
 def dist(firstData, secondData):
@@ -136,13 +125,11 @@ def computeCandidatePartitions(pset, k, n):
     combined_candSet = reduce(lambda x, y: np.concatenate((x, y), axis=0), candSet)
 
     print 'the number of the rest tuples: ' + str(combined_candSet.shape[0])
-    print('finished')
 
     return combined_candSet
 
 
 def getPartitionsBirch(data):
-    print('doing partition-based algorithm ...')
     num_samples = data.shape[0]
 
     num_clusters = int(float(num_samples) / 5)
@@ -163,7 +150,8 @@ def getPartitionsBirch(data):
     return all_MBR
 
 
-def getPartitionsKmenas(data):
+def getPartitionsKmeans(data, cluster_num):
+    print 'the number of partitions: ' + str(cluster_num)
     kmeans_model = KMeans(n_clusters=cluster_num).fit(data)
     ls = [[] for i in range(cluster_num)]
     for i, l in enumerate(kmeans_model.labels_):
